@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AddActivity">
+    <TextView
+        android:id="@+id/text01"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/text01_text"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="40dp"
+        />
+    <EditText
+        android:id="@+id/textEdit"
+        android:layout_width="270dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/flame"
+        app:layout_constraintLeft_toLeftOf="@id/text01"
+        app:layout_constraintTop_toBottomOf="@id/text01"
+
+        />
+    <Button
+        android:id="@+id/saveBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/save_text"
+        app:layout_constraintLeft_toLeftOf="@id/text01"
+        app:layout_constraintTop_toBottomOf="@id/textEdit"
+        />
+    <Button
+        android:id="@+id/cancelBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="50dp"
+        android:text="@string/cancel_text"
+        app:layout_constraintTop_toTopOf="@id/saveBtn"
+        app:layout_constraintLeft_toRightOf="@id/saveBtn"
+        />
+
+
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
