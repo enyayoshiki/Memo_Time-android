@@ -1,6 +1,7 @@
 package com.example.memo_time
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
@@ -24,11 +25,11 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private val MY_PERMISSION_REQUEST_FINE_LOCATION = 1
+
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var lastlocation : Location
     private var locationCallback: LocationCallback? = null
     private lateinit var realm: Realm
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +42,8 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         realm = Realm.getDefaultInstance()
+
+
         memoBtn.setOnClickListener {
             val intent = Intent(this,AddActivity::class.java)
             intent.putExtra("lat",lastlocation.latitude)
@@ -53,6 +56,47 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         super.onStart()
         if (::mMap.isInitialized){
             putsMarkers()
+        }
+    }
+
+
+    private fun myLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mMap.isMyLocationEnabled = true
+            val locationRequest = LocationRequest().apply {
+                interval = 10000
+                fastestInterval = 5000
+                priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            }
+
+            locationCallback = object : LocationCallback(){
+                @SuppressLint("SetTextI18n")
+                override fun onLocationResult(locationResult: LocationResult?) {
+                    if (locationResult?.lastLocation != null){
+                        lastlocation = locationResult.lastLocation
+                        val currentLatLng = LatLng(lastlocation.latitude,lastlocation.longitude)
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng))
+                        textView.text ="Lat:${lastlocation.latitude} Lng:${lastlocation.longitude}"
+                    }
+                }
+            }
+            fusedLocationProviderClient.requestLocationUpdates(locationRequest,locationCallback,null)
+            putsMarkers()
+        }
+    }
+
+    private fun putsMarkers(){
+        mMap.clear()
+        val realmResults = realm.where(Memo::class.java).findAll()
+        for (memo:Memo in realmResults){
+            val latLng = LatLng(memo.lat, memo.lng)
+            val marker = MarkerOptions()
+                .position(latLng)
+                .title(DateFormat.format("yyyy//MM//dd kk:mm",memo.dataTime).toString())
+                .snippet(memo.memo).draggable(false)
+            val descriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+            marker.icon(descriptor)
+            mMap.addMarker(marker)
         }
     }
 
@@ -112,47 +156,21 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         }
     }
 
-    private fun myLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            mMap.isMyLocationEnabled = true
-            val locationRequest = LocationRequest().apply {
-                interval = 10000
-                fastestInterval = 5000
-                priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            }
-            locationCallback = object : LocationCallback(){
-                override fun onLocationResult(locationResult: LocationResult?) {
-                    if (locationResult?.lastLocation != null){
-                        lastlocation = locationResult.lastLocation
-                        val currentLatLng = LatLng(lastlocation.latitude,lastlocation.longitude)
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng))
-                        textView.text ="Lat:${lastlocation.latitude} Lng:${lastlocation.longitude}"
-                    }
-                }
-            }
-            fusedLocationProviderClient.requestLocationUpdates(locationRequest,locationCallback,null)
-            putsMarkers()
-        }
-    }
-
-    private fun putsMarkers(){
-        mMap.clear()
-        val realmResults = realm.where(Memo::class.java).findAll()
-        for (memo:Memo in realmResults){
-            val latLng = LatLng(memo.lat, memo.lng)
-            val marker = MarkerOptions()
-                .position(latLng)
-                .title(DateFormat.format("yyyy//MM//dd kk:mm",memo.dataTime).toString())
-                .snippet(memo.memo).draggable(false)
-            val descriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-            marker.icon(descriptor)
-            mMap.addMarker(marker)
-        }
-    }
-
     private fun showToast(msg:String) {
         val toast = Toast.makeText(this, msg, Toast.LENGTH_LONG)
         toast.show()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (locationCallback != null) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        realm.close()
     }
 }
 
