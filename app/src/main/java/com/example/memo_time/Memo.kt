@@ -6,10 +6,10 @@ import java.util.*
 
 open class Memo: RealmObject() {
     @PrimaryKey
-    var id = 0
+    var id:Long? = 0
     var dataTime = Date()
-    var lat = 0.0
-    var lng = 0.0
-    var memo =""
+    var lat:Double? = 0.0
+    var lng:Double? = 0.0
+    var memo:String? =""
 
 }

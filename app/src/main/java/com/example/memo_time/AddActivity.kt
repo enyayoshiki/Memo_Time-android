@@ -3,6 +3,7 @@ package com.example.memo_time
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import com.google.android.gms.maps.model.LatLng
 import io.realm.Realm
 import io.realm.kotlin.createObject
 import io.realm.kotlin.where
@@ -17,8 +18,8 @@ class AddActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add)
         realm = Realm.getDefaultInstance()
 
-        val lat = intent.getDoubleExtra("lat",0.0)
-        val lng = intent.getDoubleExtra("lng",0.0)
+        val lat:Double? = intent.getDoubleExtra("lat",0.0)
+        val lng:Double? = intent.getDoubleExtra("lng",0.0)
 
         saveBtn.setOnClickListener {
             val memoStr = textEdit.text.toString()

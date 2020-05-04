@@ -20,14 +20,14 @@ import com.google.android.gms.maps.model.*
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClickListener {
+class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapLongClickListener,GoogleMap.OnInfoWindowLongClickListener{
 
     private lateinit var mMap: GoogleMap
     private val MY_PERMISSION_REQUEST_FINE_LOCATION = 1
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var lastlocation : Location
     private var locationCallback: LocationCallback? = null
-    private var lastPoint: LatLng? = null
+    private var lastPoint: LatLng = LatLng(0.0,0.0)
     private lateinit var realm: Realm
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,15 +40,33 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         realm = Realm.getDefaultInstance()
 
-
         memoBtn.setOnClickListener {
             val intent = Intent(this,AddActivity::class.java)
+
             intent.putExtra("lat",lastlocation.latitude)
             intent.putExtra("lng",lastlocation.longitude)
             startActivity(intent)
+
         }
     }
-    override fun onMapClick(point: LatLng) {
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        val realmResults = realm.where(Memo::class.java).findAll()
+        mMap = googleMap
+        checkPermission()
+
+        mMap.setOnMapLongClickListener(GoogleMap.OnMapLongClickListener {
+            onMapLongClick(it)
+        })
+
+        mMap.setOnInfoWindowClickListener(GoogleMap.OnInfoWindowClickListener {
+            onInfoWindowLongClick(it)
+            
+        })
+
+
+    }
+    override fun onMapLongClick(point: LatLng) {
         var marker = MarkerOptions().position(point).title("目的地")
         mMap.addMarker(marker)
         try {
@@ -66,14 +84,28 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        if (::mMap.isInitialized){
-            putsMarkers()
+    override fun onInfoWindowLongClick(p0: Marker?) {
+        if (p0 == null) {
+            showToast("取得できません")
+            return
+        } else {
+            val intent = Intent(this, AddActivity::class.java)
+            intent.putExtra("lat", p0.position.latitude)
+            intent.putExtra("lng", p0.position.longitude)
+            startActivity(intent)
         }
     }
 
 
+
+
+    override fun onStart() {
+        super.onStart()
+        if (::mMap.isInitialized){
+            putsMarkers()
+
+        }
+    }
 
 
 
@@ -103,29 +135,24 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
     }
 
     private fun putsMarkers(){
-        mMap.clear()
         val realmResults = realm.where(Memo::class.java).findAll()
         for (memo:Memo in realmResults){
-            val latLng = LatLng(memo.lat, memo.lng)
-            val marker = MarkerOptions()
-                .position(latLng)
-                .title(DateFormat.format("yyyy//MM//dd kk:mm",memo.dataTime).toString())
-                .snippet(memo.memo).draggable(false)
+            val latLng = memo.lat?.let { memo.lng?.let { it1 -> LatLng(it, it1) } }
+            val marker = latLng?.let {
+                MarkerOptions()
+                    .position(it)
+                    .title(DateFormat.format("yyyy//MM//dd kk:mm",memo.dataTime).toString())
+                    .snippet(memo.memo).draggable(false)
+            }
             val descriptor = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
-            marker.icon(descriptor)
+            if (marker != null) {
+                marker.icon(descriptor)
+            }
             mMap.addMarker(marker)
         }
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        checkPermission()
 
-        mMap.setOnMapClickListener(GoogleMap.OnMapClickListener {
-            onMapClick(it)
-
-        })
-    }
 
 
     private fun checkPermission() {
@@ -194,6 +221,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
         super.onDestroy()
         realm.close()
     }
+
 
 
 }
