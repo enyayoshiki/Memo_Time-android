@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import android.text.format.DateFormat
@@ -15,10 +16,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -26,10 +24,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
 
     private lateinit var mMap: GoogleMap
     private val MY_PERMISSION_REQUEST_FINE_LOCATION = 1
-
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var lastlocation : Location
     private var locationCallback: LocationCallback? = null
+    private var lastPoint: LatLng? = null
     private lateinit var realm: Realm
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +41,6 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
         realm = Realm.getDefaultInstance()
 
 
-
         memoBtn.setOnClickListener {
             val intent = Intent(this,AddActivity::class.java)
             intent.putExtra("lat",lastlocation.latitude)
@@ -54,6 +51,17 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
     override fun onMapClick(point: LatLng) {
         var marker = MarkerOptions().position(point).title("目的地")
         mMap.addMarker(marker)
+        try {
+            val straight = PolylineOptions()
+            straight.color(Color.BLUE)
+            straight.width(6F)
+            straight.add(lastPoint)
+            straight.add(point)
+            mMap.addPolyline(straight)
+            lastPoint = point
+        } catch (e: Exception) {
+            lastPoint = point
+        }
     }
 
     override fun onStart() {
@@ -62,6 +70,9 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
             putsMarkers()
         }
     }
+
+
+
 
 
     private fun myLocation() {
@@ -110,6 +121,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
 
         mMap.setOnMapClickListener(GoogleMap.OnMapClickListener {
             onMapClick(it)
+
         })
     }
 
@@ -183,6 +195,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
 
 
 }
+
+
+
+
 
 
 
