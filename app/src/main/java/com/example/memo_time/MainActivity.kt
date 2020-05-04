@@ -53,10 +53,12 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClick
         mMap.addMarker(marker)
         try {
             val straight = PolylineOptions()
-            straight.color(Color.BLUE)
-            straight.width(6F)
-            straight.add(lastPoint)
-            straight.add(point)
+            straight.apply {
+                color(Color.BLUE)
+                width(6F)
+                add(lastPoint)
+                add(point)
+            }
             mMap.addPolyline(straight)
             lastPoint = point
         } catch (e: Exception) {
