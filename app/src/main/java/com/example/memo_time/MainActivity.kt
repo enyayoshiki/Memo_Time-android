@@ -16,12 +16,13 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import io.realm.Realm
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(),OnMapReadyCallback {
+class MainActivity : AppCompatActivity(),OnMapReadyCallback,GoogleMap.OnMapClickListener {
 
     private lateinit var mMap: GoogleMap
     private val MY_PERMISSION_REQUEST_FINE_LOCATION = 1
@@ -38,10 +39,9 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-
         realm = Realm.getDefaultInstance()
+
 
 
         memoBtn.setOnClickListener {
@@ -50,6 +50,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
             intent.putExtra("lng",lastlocation.longitude)
             startActivity(intent)
         }
+    }
+    override fun onMapClick(point: LatLng) {
+        var marker = MarkerOptions().position(point).title("目的地")
+        mMap.addMarker(marker)
     }
 
     override fun onStart() {
@@ -103,6 +107,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         checkPermission()
+
+        mMap.setOnMapClickListener(GoogleMap.OnMapClickListener {
+            onMapClick(it)
+        })
     }
 
 
@@ -172,7 +180,13 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         super.onDestroy()
         realm.close()
     }
+
+
 }
+
+
+
+
 
 
 
